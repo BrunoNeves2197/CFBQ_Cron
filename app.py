@@ -96,15 +96,16 @@ if "countdown_prep" not in st.session_state: st.session_state.countdown_prep = 1
 if "round_atual" not in st.session_state: st.session_state.round_atual = 1
 if "em_descanso" not in st.session_state: st.session_state.em_descanso = False
 
-som_curto_placeholder = st.empty()
-som_longo_placeholder = st.empty()
+# Criamos caixas independentes de som para não haver conflito de concorrência no navegador
+som_box = st.empty()
 
 def disparar_som(tipo):
     try:
+        som_box.empty() # Limpa o áudio anterior forçadamente
         if tipo == "321" and os.path.exists("beep_curto.wav"):
-            som_curto_placeholder.audio("beep_curto.wav", autoplay=True)
+            som_box.audio("beep_curto.wav", autoplay=True)
         elif tipo == "go" and os.path.exists("beep_longo.wav"):
-            som_longo_placeholder.audio("beep_longo.wav", autoplay=True)
+            som_box.audio("beep_longo.wav", autoplay=True)
     except:
         pass
 
@@ -221,7 +222,7 @@ elif st.session_state.em_execucao:
         timer_box.markdown(f"<div class='timer-text' style='color: #D97824;'>00:00:{st.session_state.countdown_prep:02d}</div>", unsafe_allow_html=True)
         round_box.markdown("<div class='round-text'>PREPARAÇÃO</div>", unsafe_allow_html=True)
         
-        # Regra: 3, 2, 1 -> Curto
+        # 3, 2, 1 -> Curto
         if 1 <= st.session_state.countdown_prep <= 3: 
             disparar_som("321")
             
@@ -238,6 +239,7 @@ elif st.session_state.em_execucao:
         r = st.session_state.round_atual
         if r > rounds_totais:
             st.session_state.em_execucao = False
+            disparar_som("go") # Bipe longo final do WOD Completo
             status_box.markdown("<div class='status-text' style='color: #D97824;'>WORKOUT DONE! 🔥</div>", unsafe_allow_html=True)
             timer_box.markdown("<div class='timer-text' style='color: #D97824;'>00:00:00</div>", unsafe_allow_html=True)
             round_box.markdown("<div class='round-text'>WOD FINALIZADO!</div>", unsafe_allow_html=True)
@@ -251,7 +253,7 @@ elif st.session_state.em_execucao:
             tempo_restante_ciclo = tempo_total_segundos - st.session_state.tempo_decorrido
             segundos_tela = tempo_restante_ciclo if regressiva else st.session_state.tempo_decorrido
             
-            # GATILHO CORRIGIDO: Bipa curto no 3, 2, 1 antes de zerar o tempo
+            # Bipa curto no 3, 2, 1 antes de virar ou terminar
             cor_atual = "#FFFFFF"
             if 1 <= tempo_restante_ciclo <= 3:
                 cor_atual = "#D97824"
@@ -264,7 +266,7 @@ elif st.session_state.em_execucao:
             st.session_state.tempo_decorrido += 1
 
             if st.session_state.tempo_decorrido > tempo_total_segundos:
-                disparar_som("go") # Solta o bipe longo exatamente na virada (0)
+                disparar_som("go") # 🔥 Bipe LONGO cravado na virada do EMOM / Início do Descanso
                 if protocolo == "TABATA":
                     st.session_state.em_descanso = True
                     st.session_state.tempo_decorrido = 0
@@ -287,4 +289,20 @@ elif st.session_state.em_execucao:
             st.session_state.tempo_decorrido += 1
 
             if st.session_state.tempo_decorrido > tempo_descanso:
-                disparar_som("go") # Sol
+                disparar_som("go") # 🔥 Bipe LONGO cravado na volta pro WORK
+                st.session_state.em_descanso = False
+                st.session_state.round_atual += 1
+                st.session_state.tempo_decorrido = 0
+            st.rerun()
+
+# =====================================================================
+# ESTADO DE ESPERA
+# =====================================================================
+else:
+    if not st.session_state.resetado:
+        status_box.markdown("<div class='status-text' style='color: #FF3333;'>TREINO INTERROMPIDO</div>", unsafe_allow_html=True)
+    else:
+        status_box.markdown("<div class='status-text'>READY TO WORK</div>", unsafe_allow_html=True)
+        
+    timer_box.markdown("<div class='timer-text'>00:00:00</div>", unsafe_allow_html=True)
+    round_box.markdown("<div class='round-text'>ROUND: -- / --</div>", unsafe_allow_html=True)
