@@ -5,10 +5,22 @@ import os
 # 1. CONFIGURAÇÃO DA PÁGINA (Preto Absoluto e Otimizado para TV)
 st.set_page_config(page_title="CF BQ - Official Web Timer", layout="wide")
 
+# Inicializa o estado da tela cheia virtual antes do CSS
+if "tela_cheia" not in st.session_state: 
+    st.session_state.tela_cheia = False
+
 # =====================================================================
 # 🎨 CSS BLINDADO - MAIS ESPAÇO FORÇADO INTERNO (PADDING)
 # =====================================================================
-st.markdown("""
+# Se a tela cheia estiver ativa, aplicamos estilos que removem completamente a barra lateral e maximizam tudo
+css_dinamico = ""
+if st.session_state.tela_cheia:
+    css_dinamico = """
+    [data-testid="stSidebar"] { display: none !important; }
+    .main-display { left: 50% !important; width: 100% !important; height: 100vh !important; }
+    """
+
+st.markdown(f"""
     <style>
     /* Esconde o cabeçalho oficial, o menu e o rodapé do Streamlit */
     header, footer, [data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
@@ -63,6 +75,7 @@ st.markdown("""
         text-align: center;
         width: 85%; 
         height: 98vh;
+        transition: all 0.3s ease;
     }
     
     .status-text { 
@@ -93,29 +106,33 @@ st.markdown("""
     div.stButton > button { font-family: 'Impact', sans-serif; font-size: 18px; background-color: #D97824; color: white; border: none; border-radius: 8px; height: 42px; }
     div.stButton > button:hover { background-color: #b3601b; color: white; }
 
-    /* --- ADICIONADO: ESTILO DO BOTÃO DE TELA CHEIA DISCRETO NO CANTO INFERIOR --- */
-    .fullscreen-btn {
-        position: fixed;
-        bottom: 15px;
-        right: 15px;
-        background-color: #121212;
-        color: #A0A0A0;
-        border: 1px solid #333333;
-        padding: 6px 12px;
-        font-family: 'Arial', sans-serif;
-        font-size: 11px;
-        font-weight: bold;
-        border-radius: 4px;
-        cursor: pointer;
-        z-index: 999999;
-        transition: all 0.2s ease;
-        letter-spacing: 1px;
+    /* --- ESTILO DO BOTÃO FLUTUANTE DE TELA CHEIA (STREAMLIT NATIVO) --- */
+    div.element-container:has(button[key="btn_fullscreen_global"]) {
+        position: fixed !important;
+        bottom: 15px !important;
+        right: 15px !important;
+        width: auto !important;
+        z-index: 999999 !important;
     }
-    .fullscreen-btn:hover {
-        background-color: #D97824;
-        color: white;
-        border-color: #D97824;
+    button[key="btn_fullscreen_global"] {
+        font-family: 'Arial', sans-serif !important;
+        font-size: 11px !important;
+        font-weight: bold !important;
+        background-color: #121212 !important;
+        color: #A0A0A0 !important;
+        border: 1px solid #333333 !important;
+        border-radius: 4px !important;
+        height: 28px !important;
+        padding: 0px 12px !important;
+        letter-spacing: 1px !important;
     }
+    button[key="btn_fullscreen_global"]:hover {
+        background-color: #D97824 !important;
+        color: white !important;
+        border-color: #D97824 !important;
+    }
+
+    {css_dinamico}
     </style>
 """, unsafe_allow_html=True)
 
@@ -215,42 +232,11 @@ round_box = st.empty()
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# =====================================================================
-# 🖥️ ADICIONADO: INJEÇÃO DO BOTÃO DE TELA CHEIA VIA JAVASCRIPT
-# =====================================================================
-st.markdown("""
-    <button class="fullscreen-btn" onclick="toggleFullscreen()">TELA CHEIA 🔲</button>
-    
-    <script>
-    function toggleFullscreen() {
-        // Alvo é a janela principal do navegador
-        var doc = window.parent.document.documentElement;
-        var btn = window.parent.document.querySelector('.fullscreen-btn');
-        
-        if (!window.parent.document.fullscreenElement) {
-            if (doc.requestFullscreen) {
-                doc.requestFullscreen();
-            } else if (doc.mozRequestFullScreen) { // Firefox
-                doc.mozRequestFullScreen();
-            } else if (doc.webkitRequestFullscreen) { // Chrome, Safari e Opera
-                doc.webkitRequestFullscreen();
-            } else if (doc.msRequestFullscreen) { // IE/Edge
-                doc.msRequestFullscreen();
-            }
-        } else {
-            if (window.parent.document.exitFullscreen) {
-                window.parent.document.exitFullscreen();
-            } else if (window.parent.document.mozCancelFullScreen) {
-                window.parent.document.mozCancelFullScreen();
-            } else if (window.parent.document.webkitExitFullscreen) {
-                window.parent.document.webkitExitFullscreen();
-            } else if (window.parent.document.msExitFullscreen) {
-                window.parent.document.msExitFullscreen();
-            }
-        }
-    }
-    </script>
-""", unsafe_allow_html=True)
+# --- ADICIONADO: BOTÃO NATIVO FIXADO VIA CSS NO CANTO INFERIOR ---
+txt_btn_tela = "TELA NORMAL 🖵" if st.session_state.tela_cheia else "TELA CHEIA 🔲"
+if st.button(txt_btn_tela, key="btn_fullscreen_global"):
+    st.session_state.tela_cheia = not st.session_state.tela_cheia
+    st.rerun()
 
 
 def formatar_tempo(segundos):
