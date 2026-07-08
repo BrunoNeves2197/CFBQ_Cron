@@ -92,6 +92,30 @@ st.markdown("""
     
     div.stButton > button { font-family: 'Impact', sans-serif; font-size: 18px; background-color: #D97824; color: white; border: none; border-radius: 8px; height: 42px; }
     div.stButton > button:hover { background-color: #b3601b; color: white; }
+
+    /* --- ADICIONADO: ESTILO DO BOTÃO DE TELA CHEIA DISCRETO NO CANTO INFERIOR --- */
+    .fullscreen-btn {
+        position: fixed;
+        bottom: 15px;
+        right: 15px;
+        background-color: #121212;
+        color: #A0A0A0;
+        border: 1px solid #333333;
+        padding: 6px 12px;
+        font-family: 'Arial', sans-serif;
+        font-size: 11px;
+        font-weight: bold;
+        border-radius: 4px;
+        cursor: pointer;
+        z-index: 999999;
+        transition: all 0.2s ease;
+        letter-spacing: 1px;
+    }
+    .fullscreen-btn:hover {
+        background-color: #D97824;
+        color: white;
+        border-color: #D97824;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -190,6 +214,44 @@ timer_box = st.empty()
 round_box = st.empty()
 
 st.markdown("</div>", unsafe_allow_html=True)
+
+# =====================================================================
+# 🖥️ ADICIONADO: INJEÇÃO DO BOTÃO DE TELA CHEIA VIA JAVASCRIPT
+# =====================================================================
+st.markdown("""
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">TELA CHEIA 🔲</button>
+    
+    <script>
+    function toggleFullscreen() {
+        // Alvo é a janela principal do navegador
+        var doc = window.parent.document.documentElement;
+        var btn = window.parent.document.querySelector('.fullscreen-btn');
+        
+        if (!window.parent.document.fullscreenElement) {
+            if (doc.requestFullscreen) {
+                doc.requestFullscreen();
+            } else if (doc.mozRequestFullScreen) { // Firefox
+                doc.mozRequestFullScreen();
+            } else if (doc.webkitRequestFullscreen) { // Chrome, Safari e Opera
+                doc.webkitRequestFullscreen();
+            } else if (doc.msRequestFullscreen) { // IE/Edge
+                doc.msRequestFullscreen();
+            }
+        } else {
+            if (window.parent.document.exitFullscreen) {
+                window.parent.document.exitFullscreen();
+            } else if (window.parent.document.mozCancelFullScreen) {
+                window.parent.document.mozCancelFullScreen();
+            } else if (window.parent.document.webkitExitFullscreen) {
+                window.parent.document.webkitExitFullscreen();
+            } else if (window.parent.document.msExitFullscreen) {
+                window.parent.document.msExitFullscreen();
+            }
+        }
+    }
+    </script>
+""", unsafe_allow_html=True)
+
 
 def formatar_tempo(segundos):
     h, resto = divmod(segundos, 3600)
