@@ -209,7 +209,7 @@ if st.session_state.modo_anuncio:
             while st.session_state.modo_anuncio:
                 img_atual = lista_fotos[st.session_state.indice_anuncio % len(lista_fotos)]
                 timer_box.image(os.path.join(pasta_anuncios, img_atual), width=520)
-                time.sleep(5)
+                time.sleep(12)
                 st.session_state.indice_anuncio += 1
                 st.rerun()
 
