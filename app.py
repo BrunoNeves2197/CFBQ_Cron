@@ -6,12 +6,14 @@ import os
 st.set_page_config(page_title="CF BQ - Official Web Timer", layout="wide")
 
 # =====================================================================
-# 🎨 CSS BLINDADO - AJUSTADO PARA BOTÕES HORIZONTAIS DE CONFIGURAÇÃO
+# 🎨 CSS BLINDADO - CONTROLE TOTAL DOS BOTÕES DE MAIS E MENOS
 # =====================================================================
 st.markdown("""
     <style>
+    /* Esconde o cabeçalho oficial, o menu e o rodapé do Streamlit */
     header, footer, [data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
     
+    /* Força o aplicativo a travar o tamanho na tela visível e remove scroll */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"], .main {
         overflow: hidden !important;
         height: 100vh !important;
@@ -32,15 +34,33 @@ st.markdown("""
     [data-testid="stVerticalBlock"] { gap: 0rem !important; }
     audio { display: none !important; height: 0px !important; width: 0px !important; visibility: hidden !important; }
     
+    /* Configuração da Barra Lateral */
     [data-testid="stSidebar"] { background-color: #121212 !important; border-right: 2px solid #D97824 !important; }
     [data-testid="stSidebar"] label { color: #E0E0E0 !important; font-weight: bold; font-size: 14px; }
     
-    /* Força os botões de + e - do number_input a ficarem na horizontal e visíveis */
+    /* 🔥 ULTRA FORÇADOR DE BOTÕES + E - PARA TODOS OS INPUTS NUMÉRICOS */
+    div[data-testid="stNumberInput"] {
+        width: 100% !important;
+    }
+    
+    /* Customiza a cor dos botões de + e - para o Laranja Oficial */
     div[data-testid="stNumberInput"] button {
         background-color: #D97824 !important;
         color: white !important;
+        border: none !important;
     }
     
+    div[data-testid="stNumberInput"] button:hover {
+        background-color: #b3601b !important;
+    }
+    
+    /* Alinha o texto interno no centro */
+    div[data-testid="stNumberInput"] input {
+        text-align: center !important;
+        font-weight: bold !important;
+    }
+    
+    /* POSITION ABSOLUTE: Fixa o display no centro físico */
     .main-display {
         position: absolute;
         top: 50%;
@@ -64,13 +84,12 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. INICIALIZAÇÃO DE VARIÁVEIS DE SESSÃO (MEMÓRIA ATIVA)
+# 2. INICIALIZAÇÃO DE VARIÁVEIS DE SESSÃO
 if "em_execucao" not in st.session_state: st.session_state.em_execucao = False
 if "modo_anuncio" not in st.session_state: st.session_state.modo_anuncio = False
 if "indice_anuncio" not in st.session_state: st.session_state.indice_anuncio = 0
 if "resetado" not in st.session_state: st.session_state.resetado = True
 
-# Controles internos de tempo para evitar travar o botão Stop
 if "tempo_decorrido" not in st.session_state: st.session_state.tempo_decorrido = 0
 if "fase_preparacao" not in st.session_state: st.session_state.fase_preparacao = True
 if "countdown_prep" not in st.session_state: st.session_state.countdown_prep = 10
@@ -89,7 +108,7 @@ def disparar_som(tipo):
     except:
         pass
 
-# 3. PAINEL LATERAL (CONFIGURAÇÕES COM CONTROLES + E - HORIZONTAIS)
+# 3. PAINEL LATERAL (CONFIGURAÇÕES)
 with st.sidebar:
     st.markdown("<h2 style='color: #D97824; font-family: Impact; text-align: center; margin-bottom: 20px;'>CONFIGURAÇÕES</h2>", unsafe_allow_html=True)
     
@@ -99,10 +118,11 @@ with st.sidebar:
     direcao = st.selectbox("Tipo de Contagem:", ["Decrescente (Regressiva)", "Crescente (Progressiva)"], disabled=travado_por_anuncio)
     
     st.markdown("**Tempo de Trabalho:**")
-    c1, c2, c3 = st.columns(3)
-    with c1: h_val = st.number_input("Horas", min_value=0, max_value=23, value=0, step=1, disabled=travado_por_anuncio, label_visibility="visible")
-    with c2: m_val = st.number_input("Min", min_value=0, max_value=59, value=1, step=1, disabled=travado_por_anuncio, label_visibility="visible")
-    with c3: s_val = st.number_input("Seg", min_value=0, max_value=59, value=0, step=1, disabled=travado_por_anuncio, label_visibility="visible")
+    c_min, c_seg = st.columns(2)
+    with c_min: m_val = st.number_input("Minutos:", min_value=0, max_value=59, value=1, step=1, disabled=travado_por_anuncio)
+    with c_seg: s_val = st.number_input("Segundos:", min_value=0, max_value=59, value=0, step=1, disabled=travado_por_anuncio)
+    
+    h_val = st.number_input("Horas (Opcional):", min_value=0, max_value=23, value=0, step=1, disabled=travado_por_anuncio)
     
     tempo_total_segundos = (h_val * 3600) + (m_val * 60) + s_val
     
@@ -190,49 +210,49 @@ if st.session_state.modo_anuncio:
                 st.rerun()
 
 # =====================================================================
-# ENGINE DO CRONÔMETRO (INTERRUPÇÃO ULTRA-RÁPIDA PELO STOP)
+# ENGINE DO CRONÔMETRO (SINCRO DE BIPES NO SEGUNDO EXATO)
 # =====================================================================
 elif st.session_state.em_execucao:
     regressiva = "Decrescente" in direcao
 
-    # ⏱️ FASE 1: COUNTDOWN PREPARATÓRIO DE 10 SEGUNDOS
+    # ⏱️ FASE 1: COUNTDOWN PREPARATÓRIO (10 SEGUNDOS)
     if st.session_state.fase_preparacao:
         status_box.markdown("<div class='status-text' style='color: #D97824;'>PREPARE-SE! (COUNTDOWN)</div>", unsafe_allow_html=True)
         timer_box.markdown(f"<div class='timer-text' style='color: #D97824;'>00:00:{st.session_state.countdown_prep:02d}</div>", unsafe_allow_html=True)
         round_box.markdown("<div class='round-text'>PREPARAÇÃO</div>", unsafe_allow_html=True)
         
+        # Bipa curto no 3, 2, 1
         if 1 <= st.session_state.countdown_prep <= 3: 
             disparar_som("321")
             
         time.sleep(1)
         st.session_state.countdown_prep -= 1
         
+        # Bipa longo no 0 e dá o play
         if st.session_state.countdown_prep < 0:
             st.session_state.fase_preparacao = False
             disparar_som("go")
         st.rerun()
 
-    # ⏱️ FASE 2: EXECUÇÃO DO WOD (EMOM, AMRAP, TABATA)
+    # ⏱️ FASE 2: EXECUÇÃO DO TREINO
     else:
         r = st.session_state.round_atual
         if r > rounds_totais:
-            # Fim do Treino Completo com Sucesso
             st.session_state.em_execucao = False
             status_box.markdown("<div class='status-text' style='color: #D97824;'>WORKOUT DONE! 🔥</div>", unsafe_allow_html=True)
             timer_box.markdown("<div class='timer-text' style='color: #D97824;'>00:00:00</div>", unsafe_allow_html=True)
             round_box.markdown("<div class='round-text'>WOD FINALIZADO!</div>", unsafe_allow_html=True)
             st.rerun()
 
-        # Configura as labels inferiores
         txt_round = "AMRAP / TIME CAP" if protocolo == "AMRAP / For Time" else f"ROUND: {r} / {rounds_totais}"
         round_box.markdown(f"<div class='round-text'>{txt_round}</div>", unsafe_allow_html=True)
 
         if not st.session_state.em_descanso:
-            # MODO WORK (TRABALHO)
+            # 🟢 MODO WORK
             tempo_restante_ciclo = tempo_total_segundos - st.session_state.tempo_decorrido
             segundos_tela = tempo_restante_ciclo if regressiva else st.session_state.tempo_decorrido
             
-            # Controle Inteligente de Bipes do Final do Tempo (Faltando 3 segundos)
+            # Trava Laranja visual e sonora nos 3 segundos finais reais do WOD/Round
             cor_atual = "#FFFFFF"
             if 1 <= tempo_restante_ciclo <= 3:
                 cor_atual = "#D97824"
@@ -256,7 +276,7 @@ elif st.session_state.em_execucao:
             st.rerun()
 
         else:
-            # MODO REST (DESCANSO EXCLUSIVO TABATA)
+            # 🔵 MODO REST (DESCANSO TABATA)
             tempo_restante_descanso = tempo_descanso - st.session_state.tempo_decorrido
             
             if 1 <= tempo_restante_descanso <= 3:
@@ -277,7 +297,7 @@ elif st.session_state.em_execucao:
             st.rerun()
 
 # =====================================================================
-# ESTADO DE ESPERA (PADRÃO / INTERROMPIDO)
+# ESTADO DE ESPERA
 # =====================================================================
 else:
     if not st.session_state.resetado:
