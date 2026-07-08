@@ -32,7 +32,6 @@ st.markdown("""
     }
     
     [data-testid="stVerticalBlock"] { gap: 0rem !important; }
-    audio { display: none !important; height: 0px !important; width: 0px !important; visibility: hidden !important; }
     
     /* Configuração da Barra Lateral */
     [data-testid="stSidebar"] { background-color: #121212 !important; border-right: 2px solid #D97824 !important; }
@@ -89,25 +88,13 @@ if "em_execucao" not in st.session_state: st.session_state.em_execucao = False
 if "modo_anuncio" not in st.session_state: st.session_state.modo_anuncio = False
 if "indice_anuncio" not in st.session_state: st.session_state.indice_anuncio = 0
 if "resetado" not in st.session_state: st.session_state.resetado = True
+if "wod_finalizado" not in st.session_state: st.session_state.wod_finalizado = False
 
 if "tempo_decorrido" not in st.session_state: st.session_state.tempo_decorrido = 0
 if "fase_preparacao" not in st.session_state: st.session_state.fase_preparacao = True
 if "countdown_prep" not in st.session_state: st.session_state.countdown_prep = 10
 if "round_atual" not in st.session_state: st.session_state.round_atual = 1
 if "em_descanso" not in st.session_state: st.session_state.em_descanso = False
-
-# Caixa de som limpa
-som_box = st.empty()
-
-def disparar_som(tipo):
-    try:
-        som_box.empty()
-        if tipo == "321" and os.path.exists("beep_curto.wav"):
-            som_box.audio("beep_curto.wav", autoplay=True)
-        elif tipo == "go" and os.path.exists("beep_longo.wav"):
-            som_box.audio("beep_longo.wav", autoplay=True)
-    except:
-        pass
 
 # 3. PAINEL LATERAL (CONFIGURAÇÕES)
 with st.sidebar:
@@ -139,20 +126,23 @@ with st.sidebar:
 
     st.markdown("---")
     
-    btn_start = st.button("START WOD 🚀", use_container_width=True, disabled=st.session_state.modo_anuncio or st.session_state.em_execucao)
+    # Gerencia travas dos botões de controle
+    desabilitar_start = st.session_state.modo_anuncio or st.session_state.em_execucao or st.session_state.wod_finalizado
+    btn_start = st.button("START WOD 🚀", use_container_width=True, disabled=desabilitar_start)
     btn_stop = st.button("STOP 🛑", use_container_width=True, disabled=st.session_state.modo_anuncio or not st.session_state.em_execucao)
     
     pode_resetar = (not st.session_state.em_execucao) and (not st.session_state.resetado) and (not st.session_state.modo_anuncio)
     btn_reset = st.button("RESET 🔄", use_container_width=True, disabled=not pode_resetar)
     
     label_mural = "VOLTAR P/ RELÓGIO 🕒" if st.session_state.modo_anuncio else "EXIBIR ANÚNCIOS 📢"
-    btn_anuncio = st.button(label_mural, use_container_width=True)
+    btn_anuncio = st.button(label_mural, use_container_width=True, disabled=st.session_state.em_execucao)
 
     if btn_start:
         if tempo_total_segundos > 0:
             st.session_state.em_execucao = True
             st.session_state.modo_anuncio = False
             st.session_state.resetado = False
+            st.session_state.wod_finalizado = False
             st.session_state.fase_preparacao = True
             st.session_state.countdown_prep = 10
             st.session_state.tempo_decorrido = 0
@@ -168,6 +158,8 @@ with st.sidebar:
         st.session_state.resetado = True
         st.session_state.em_execucao = False
         st.session_state.modo_anuncio = False
+        st.session_state.wod_finalizado = False
+        st.session_state.tempo_decorrido = 0
         st.rerun()
         
     if btn_anuncio:
@@ -211,7 +203,7 @@ if st.session_state.modo_anuncio:
                 st.rerun()
 
 # =====================================================================
-# ENGINE DO CRONÔMETRO (SINCRO DE BIPES NO SEGUNDO EXATO)
+# ENGINE DO CRONÔMETRO
 # =====================================================================
 elif st.session_state.em_execucao:
     regressiva = "Decrescente" in direcao
@@ -222,16 +214,10 @@ elif st.session_state.em_execucao:
         timer_box.markdown(f"<div class='timer-text' style='color: #D97824;'>00:00:{st.session_state.countdown_prep:02d}</div>", unsafe_allow_html=True)
         round_box.markdown("<div class='round-text'>PREPARAÇÃO</div>", unsafe_allow_html=True)
         
-        # 3, 2, 1 -> Bipa Curto
-        if 1 <= st.session_state.countdown_prep <= 3: 
-            disparar_som("321")
-            
         time.sleep(1)
         st.session_state.countdown_prep -= 1
         
-        # 🎯 CORREÇÃO: Dispara o som longo ANTES de virar o estado e dar rerun
         if st.session_state.countdown_prep < 0:
-            disparar_som("go") # 0 -> Apito longo de INÍCIO REAL DO WOD!
             st.session_state.fase_preparacao = False
         st.rerun()
 
@@ -239,11 +225,9 @@ elif st.session_state.em_execucao:
     else:
         r = st.session_state.round_atual
         if r > rounds_totais:
+            # 🏁 TRAVA DO TEMPO FINAL: Congela o estado aqui e desliga a flag de execução
             st.session_state.em_execucao = False
-            disparar_som("go") # Bipe longo final do WOD Completo
-            status_box.markdown("<div class='status-text' style='color: #D97824;'>WORKOUT DONE! 🔥</div>", unsafe_allow_html=True)
-            timer_box.markdown("<div class='timer-text' style='color: #D97824;'>00:00:00</div>", unsafe_allow_html=True)
-            round_box.markdown("<div class='round-text'>WOD FINALIZADO!</div>", unsafe_allow_html=True)
+            st.session_state.wod_finalizado = True
             st.rerun()
 
         txt_round = "AMRAP / TIME CAP" if protocolo == "AMRAP / For Time" else f"ROUND: {r} / {rounds_totais}"
@@ -254,11 +238,9 @@ elif st.session_state.em_execucao:
             tempo_restante_ciclo = tempo_total_segundos - st.session_state.tempo_decorrido
             segundos_tela = tempo_restante_ciclo if regressiva else st.session_state.tempo_decorrido
             
-            # Bipa curto no 3, 2, 1 antes de virar ou terminar
             cor_atual = "#FFFFFF"
             if 1 <= tempo_restante_ciclo <= 3:
                 cor_atual = "#D97824"
-                disparar_som("321")
 
             status_box.markdown("<div class='status-text' style='color: #00FF66;'>WORK!</div>", unsafe_allow_html=True)
             timer_box.markdown(f"<div class='timer-text' style='color: {cor_atual};'>{formatar_tempo(segundos_tela)}</div>", unsafe_allow_html=True)
@@ -267,7 +249,6 @@ elif st.session_state.em_execucao:
             st.session_state.tempo_decorrido += 1
 
             if st.session_state.tempo_decorrido > tempo_total_segundos:
-                disparar_som("go") # Bipe LONGO na virada do EMOM / Término
                 if protocolo == "TABATA":
                     st.session_state.em_descanso = True
                     st.session_state.tempo_decorrido = 0
@@ -280,9 +261,6 @@ elif st.session_state.em_execucao:
             # 🔵 MODO REST (DESCANSO TABATA)
             tempo_restante_descanso = tempo_descanso - st.session_state.tempo_decorrido
             
-            if 1 <= tempo_restante_descanso <= 3:
-                disparar_som("321")
-
             status_box.markdown("<div class='status-text' style='color: #3366FF;'>REST / DESCANSO</div>", unsafe_allow_html=True)
             timer_box.markdown(f"<div class='timer-text' style='color: #3366FF;'>{formatar_tempo(tempo_restante_descanso)}</div>", unsafe_allow_html=True)
             
@@ -290,20 +268,29 @@ elif st.session_state.em_execucao:
             st.session_state.tempo_decorrido += 1
 
             if st.session_state.tempo_decorrido > tempo_descanso:
-                disparar_som("go") # Bipe LONGO na volta pro WORK
                 st.session_state.em_descanso = False
                 st.session_state.round_atual += 1
                 st.session_state.tempo_decorrido = 0
             st.rerun()
 
 # =====================================================================
-# ESTADO DE ESPERA
+# ESTADO DE ESPERA / EXIBIÇÃO DE PLACAR FINAL CONGELADO
 # =====================================================================
 else:
-    if not st.session_state.resetado:
+    if st.session_state.wod_finalizado:
+        # Se o treino terminou sozinho, exibe as marcas finais travadas na tela
+        regressiva = "Decrescente" in direcao
+        # Calcula o último segundo renderizado antes do fim para congelar perfeitamente
+        tempo_congelado = 0 if regressiva else tempo_total_segundos
+        
+        status_box.markdown("<div class='status-text' style='color: #D97824;'>WORKOUT DONE! 🔥</div>", unsafe_allow_html=True)
+        timer_box.markdown(f"<div class='timer-text' style='color: #D97824;'>{formatar_tempo(tempo_congelado)}</div>", unsafe_allow_html=True)
+        round_box.markdown("<div class='round-text'>WOD FINALIZADO!</div>", unsafe_allow_html=True)
+    elif not st.session_state.resetado:
         status_box.markdown("<div class='status-text' style='color: #FF3333;'>TREINO INTERROMPIDO</div>", unsafe_allow_html=True)
+        timer_box.markdown("<div class='timer-text'>00:00:00</div>", unsafe_allow_html=True)
+        round_box.markdown("<div class='round-text'>ROUND: -- / --</div>", unsafe_allow_html=True)
     else:
         status_box.markdown("<div class='status-text'>READY TO WORK</div>", unsafe_allow_html=True)
-        
-    timer_box.markdown("<div class='timer-text'>00:00:00</div>", unsafe_allow_html=True)
-    round_box.markdown("<div class='round-text'>ROUND: -- / --</div>", unsafe_allow_html=True)
+        timer_box.markdown("<div class='timer-text'>00:00:00</div>", unsafe_allow_html=True)
+        round_box.markdown("<div class='round-text'>ROUND: -- / --</div>", unsafe_allow_html=True)
