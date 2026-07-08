@@ -128,7 +128,7 @@ with st.sidebar:
     
     # Gerencia travas dos botões de controle
     desabilitar_start = st.session_state.modo_anuncio or st.session_state.em_execucao or st.session_state.wod_finalizado
-    btn_start = st.button("START WOD 🚀", use_container_width=True, disabled=desabilitar_start)
+    btn_start = st.button("START 🚀", use_container_width=True, disabled=desabilitar_start)
     btn_stop = st.button("STOP 🛑", use_container_width=True, disabled=st.session_state.modo_anuncio or not st.session_state.em_execucao)
     
     pode_resetar = (not st.session_state.em_execucao) and (not st.session_state.resetado) and (not st.session_state.modo_anuncio)
