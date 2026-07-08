@@ -6,7 +6,7 @@ import os
 st.set_page_config(page_title="CF BQ - Official Web Timer", layout="wide")
 
 # =====================================================================
-# 🎨 CSS BLINDADO - RELÓGIO GIGANTE COM ESPAÇAMENTO VERTICAL CORRIGIDO
+# 🎨 CSS BLINDADO - MAIS ESPAÇO FORÇADO INTERNO (PADDING)
 # =====================================================================
 st.markdown("""
     <style>
@@ -61,37 +61,33 @@ st.markdown("""
         justify-content: center;
         align-items: center;
         text-align: center;
-        width: 82%; 
+        width: 85%; 
         height: 98vh;
     }
     
-    /* Ajuste fino no texto de status superior */
     .status-text { 
         font-family: 'Impact', sans-serif; 
-        font-size: 50px; 
+        font-size: 52px; 
         text-align: center; 
         letter-spacing: 3px; 
-        margin-bottom: 15px; /* Empurra o relógio um pouco para baixo */
     }
     
-    /* RELÓGIO MONSTRO COM ESPAÇAMENTO VERTICAL AJUSTADO */
+    /* RELÓGIO MONSTRO COM ALINHAMENTO VERTICAL ROBUSTO */
     .timer-text { 
         font-family: 'Impact', sans-serif; 
         font-size: 15vw; 
         text-align: center; 
-        line-height: 0.9; 
-        margin: 25px 0px; /* Cria um espaçamento seguro de 25px em cima e embaixo do número */
-        letter-spacing: 1px; 
+        line-height: 0.85; 
+        letter-spacing: 1px;
+        padding: 20px 0px !important; /* Força um colchão de espaço nas bordas do número */
     }
     
-    /* Ajuste fino no texto inferior (Rounds) */
     .round-text { 
         font-family: 'Arial', sans-serif; 
-        font-size: 36px; 
+        font-size: 38px; 
         color: #D97824; 
         font-weight: bold; 
         text-align: center; 
-        margin-top: 15px; /* Empurra o texto um pouco para baixo, separando do relógio */
     }
     
     div.stButton > button { font-family: 'Impact', sans-serif; font-size: 18px; background-color: #D97824; color: white; border: none; border-radius: 8px; height: 42px; }
@@ -218,7 +214,7 @@ if st.session_state.modo_anuncio:
                 st.rerun()
 
 # =====================================================================
-# ENGINE DO CRONÔMETRO
+# ENGINE DO CRONÔMETRO (HTML COM <br> INJETADO PARA DESTRUIR O CACHE)
 # =====================================================================
 elif st.session_state.em_execucao:
     regressiva = "Decrescente" in direcao
@@ -226,7 +222,7 @@ elif st.session_state.em_execucao:
     # ⏱️ FASE 1: COUNTDOWN PREPARATÓRIO (10 SEGUNDOS)
     if st.session_state.fase_preparacao:
         status_box.markdown("<div class='status-text' style='color: #D97824;'>PREPARE-SE! (COUNTDOWN)</div>", unsafe_allow_html=True)
-        timer_box.markdown(f"<div class='timer-text' style='color: #D97824;'>00:00:{st.session_state.countdown_prep:02d}</div>", unsafe_allow_html=True)
+        timer_box.markdown(f"<br><div class='timer-text' style='color: #D97824;'>00:00:{st.session_state.countdown_prep:02d}</div><br>", unsafe_allow_html=True)
         round_box.markdown("<div class='round-text'>PREPARAÇÃO</div>", unsafe_allow_html=True)
         
         time.sleep(1)
@@ -246,9 +242,10 @@ elif st.session_state.em_execucao:
 
         if protocolo == "AMRAP / For Time":
             round_box.empty()
+            linha_baixo = ""
         else:
             txt_round = f"ROUND: {r} / {rounds_totais}"
-            round_box.markdown(f"<div class='round-text'>{txt_round}</div>", unsafe_allow_html=True)
+            linha_baixo = f"<div class='round-text'>{txt_round}</div>"
 
         if not st.session_state.em_descanso:
             # 🟢 MODO WORK
@@ -260,7 +257,10 @@ elif st.session_state.em_execucao:
                 cor_atual = "#D97824"
 
             status_box.markdown("<div class='status-text' style='color: #00FF66;'>WORK!</div>", unsafe_allow_html=True)
-            timer_box.markdown(f"<div class='timer-text' style='color: {cor_atual};'>{formatar_tempo(segundos_tela)}</div>", unsafe_allow_html=True)
+            timer_box.markdown(f"<br><div class='timer-text' style='color: {cor_atual};'>{formatar_tempo(segundos_tela)}</div><br>", unsafe_allow_html=True)
+            
+            if protocolo != "AMRAP / For Time":
+                round_box.markdown(linha_baixo, unsafe_allow_html=True)
             
             time.sleep(1)
             st.session_state.tempo_decorrido += 1
@@ -279,7 +279,8 @@ elif st.session_state.em_execucao:
             tempo_restante_descanso = tempo_descanso - st.session_state.tempo_decorrido
             
             status_box.markdown("<div class='status-text' style='color: #3366FF;'>REST / DESCANSO</div>", unsafe_allow_html=True)
-            timer_box.markdown(f"<div class='timer-text' style='color: #3366FF;'>{formatar_tempo(tempo_restante_descanso)}</div>", unsafe_allow_html=True)
+            timer_box.markdown(f"<br><div class='timer-text' style='color: #3366FF;'>{formatar_tempo(tempo_restante_descanso)}</div><br>", unsafe_allow_html=True)
+            round_box.markdown(linha_baixo, unsafe_allow_html=True)
             
             time.sleep(1)
             st.session_state.tempo_decorrido += 1
@@ -299,7 +300,7 @@ else:
         tempo_congelado = 0 if regressiva else tempo_total_segundos
         
         status_box.markdown("<div class='status-text' style='color: #D97824;'>WORKOUT DONE! 🔥</div>", unsafe_allow_html=True)
-        timer_box.markdown(f"<div class='timer-text' style='color: #D97824;'>{formatar_tempo(tempo_congelado)}</div>", unsafe_allow_html=True)
+        timer_box.markdown(f"<br><div class='timer-text' style='color: #D97824;'>{formatar_tempo(tempo_congelado)}</div><br>", unsafe_allow_html=True)
         
         if protocolo == "AMRAP / For Time":
             round_box.empty()
@@ -308,9 +309,9 @@ else:
             
     elif not st.session_state.resetado:
         status_box.markdown("<div class='status-text' style='color: #FF3333;'>TREINO INTERROMPIDO</div>", unsafe_allow_html=True)
-        timer_box.markdown("<div class='timer-text'>00:00:00</div>", unsafe_allow_html=True)
+        timer_box.markdown("<br><div class='timer-text'>00:00:00</div><br>", unsafe_allow_html=True)
         round_box.markdown("<div class='round-text'>ROUND: -- / --</div>", unsafe_allow_html=True)
     else:
         status_box.markdown("<div class='status-text'>READY TO WORK</div>", unsafe_allow_html=True)
-        timer_box.markdown("<div class='timer-text'>00:00:00</div>", unsafe_allow_html=True)
+        timer_box.markdown("<br><div class='timer-text'>00:00:00</div><br>", unsafe_allow_html=True)
         round_box.markdown("<div class='round-text'>ROUND: -- / --</div>", unsafe_allow_html=True)
