@@ -221,17 +221,16 @@ elif st.session_state.em_execucao:
         timer_box.markdown(f"<div class='timer-text' style='color: #D97824;'>00:00:{st.session_state.countdown_prep:02d}</div>", unsafe_allow_html=True)
         round_box.markdown("<div class='round-text'>PREPARAÇÃO</div>", unsafe_allow_html=True)
         
-        # Bipa curto no 3, 2, 1
+        # Regra: 3, 2, 1 -> Curto
         if 1 <= st.session_state.countdown_prep <= 3: 
             disparar_som("321")
             
         time.sleep(1)
         st.session_state.countdown_prep -= 1
         
-        # Bipa longo no 0 e dá o play
         if st.session_state.countdown_prep < 0:
             st.session_state.fase_preparacao = False
-            disparar_som("go")
+            disparar_som("go") # 0 -> Longo (START!)
         st.rerun()
 
     # ⏱️ FASE 2: EXECUÇÃO DO TREINO
@@ -252,13 +251,11 @@ elif st.session_state.em_execucao:
             tempo_restante_ciclo = tempo_total_segundos - st.session_state.tempo_decorrido
             segundos_tela = tempo_restante_ciclo if regressiva else st.session_state.tempo_decorrido
             
-            # Trava Laranja visual e sonora nos 3 segundos finais reais do WOD/Round
+            # GATILHO CORRIGIDO: Bipa curto no 3, 2, 1 antes de zerar o tempo
             cor_atual = "#FFFFFF"
             if 1 <= tempo_restante_ciclo <= 3:
                 cor_atual = "#D97824"
                 disparar_som("321")
-            elif tempo_restante_ciclo == 0:
-                disparar_som("go")
 
             status_box.markdown("<div class='status-text' style='color: #00FF66;'>WORK!</div>", unsafe_allow_html=True)
             timer_box.markdown(f"<div class='timer-text' style='color: {cor_atual};'>{formatar_tempo(segundos_tela)}</div>", unsafe_allow_html=True)
@@ -267,6 +264,7 @@ elif st.session_state.em_execucao:
             st.session_state.tempo_decorrido += 1
 
             if st.session_state.tempo_decorrido > tempo_total_segundos:
+                disparar_som("go") # Solta o bipe longo exatamente na virada (0)
                 if protocolo == "TABATA":
                     st.session_state.em_descanso = True
                     st.session_state.tempo_decorrido = 0
@@ -281,8 +279,6 @@ elif st.session_state.em_execucao:
             
             if 1 <= tempo_restante_descanso <= 3:
                 disparar_som("321")
-            elif tempo_restante_descanso == 0:
-                disparar_som("go")
 
             status_box.markdown("<div class='status-text' style='color: #3366FF;'>REST / DESCANSO</div>", unsafe_allow_html=True)
             timer_box.markdown(f"<div class='timer-text' style='color: #3366FF;'>{formatar_tempo(tempo_restante_descanso)}</div>", unsafe_allow_html=True)
@@ -291,19 +287,4 @@ elif st.session_state.em_execucao:
             st.session_state.tempo_decorrido += 1
 
             if st.session_state.tempo_decorrido > tempo_descanso:
-                st.session_state.em_descanso = False
-                st.session_state.round_atual += 1
-                st.session_state.tempo_decorrido = 0
-            st.rerun()
-
-# =====================================================================
-# ESTADO DE ESPERA
-# =====================================================================
-else:
-    if not st.session_state.resetado:
-        status_box.markdown("<div class='status-text' style='color: #FF3333;'>TREINO INTERROMPIDO</div>", unsafe_allow_html=True)
-    else:
-        status_box.markdown("<div class='status-text'>READY TO WORK</div>", unsafe_allow_html=True)
-        
-    timer_box.markdown("<div class='timer-text'>00:00:00</div>", unsafe_allow_html=True)
-    round_box.markdown("<div class='round-text'>ROUND: -- / --</div>", unsafe_allow_html=True)
+                disparar_som("go") # Sol
