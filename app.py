@@ -96,12 +96,12 @@ if "countdown_prep" not in st.session_state: st.session_state.countdown_prep = 1
 if "round_atual" not in st.session_state: st.session_state.round_atual = 1
 if "em_descanso" not in st.session_state: st.session_state.em_descanso = False
 
-# Criamos caixas independentes de som para não haver conflito de concorrência no navegador
+# Caixa de som limpa
 som_box = st.empty()
 
 def disparar_som(tipo):
     try:
-        som_box.empty() # Limpa o áudio anterior forçadamente
+        som_box.empty()
         if tipo == "321" and os.path.exists("beep_curto.wav"):
             som_box.audio("beep_curto.wav", autoplay=True)
         elif tipo == "go" and os.path.exists("beep_longo.wav"):
@@ -222,16 +222,17 @@ elif st.session_state.em_execucao:
         timer_box.markdown(f"<div class='timer-text' style='color: #D97824;'>00:00:{st.session_state.countdown_prep:02d}</div>", unsafe_allow_html=True)
         round_box.markdown("<div class='round-text'>PREPARAÇÃO</div>", unsafe_allow_html=True)
         
-        # 3, 2, 1 -> Curto
+        # 3, 2, 1 -> Bipa Curto
         if 1 <= st.session_state.countdown_prep <= 3: 
             disparar_som("321")
             
         time.sleep(1)
         st.session_state.countdown_prep -= 1
         
+        # 🎯 CORREÇÃO: Dispara o som longo ANTES de virar o estado e dar rerun
         if st.session_state.countdown_prep < 0:
+            disparar_som("go") # 0 -> Apito longo de INÍCIO REAL DO WOD!
             st.session_state.fase_preparacao = False
-            disparar_som("go") # 0 -> Longo (START!)
         st.rerun()
 
     # ⏱️ FASE 2: EXECUÇÃO DO TREINO
@@ -266,7 +267,7 @@ elif st.session_state.em_execucao:
             st.session_state.tempo_decorrido += 1
 
             if st.session_state.tempo_decorrido > tempo_total_segundos:
-                disparar_som("go") # 🔥 Bipe LONGO cravado na virada do EMOM / Início do Descanso
+                disparar_som("go") # Bipe LONGO na virada do EMOM / Término
                 if protocolo == "TABATA":
                     st.session_state.em_descanso = True
                     st.session_state.tempo_decorrido = 0
@@ -289,7 +290,7 @@ elif st.session_state.em_execucao:
             st.session_state.tempo_decorrido += 1
 
             if st.session_state.tempo_decorrido > tempo_descanso:
-                disparar_som("go") # 🔥 Bipe LONGO cravado na volta pro WORK
+                disparar_som("go") # Bipe LONGO na volta pro WORK
                 st.session_state.em_descanso = False
                 st.session_state.round_atual += 1
                 st.session_state.tempo_decorrido = 0
