@@ -6,7 +6,7 @@ import os
 st.set_page_config(page_title="CF BQ - Official Web Timer", layout="wide")
 
 # =====================================================================
-# 🎨 CSS BLINDADO - CONTROLE TOTAL DOS BOTÕES DE MAIS E MENOS
+# 🎨 CSS BLINDADO - RELÓGIO GIGANTE SEM BARREIRAS DE TAMANHO
 # =====================================================================
 st.markdown("""
     <style>
@@ -22,11 +22,12 @@ st.markdown("""
         padding: 0px !important;
     }
 
+    /* DETONA AS MARGENS GLOBAIS: Garante 100% de aproveitamento da tela */
     .block-container { 
         padding-top: 0rem !important; 
         padding-bottom: 0rem !important;
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
         height: 100vh !important;
         max-width: 100% !important;
     }
@@ -41,42 +42,42 @@ st.markdown("""
     div[data-testid="stNumberInput"] {
         width: 100% !important;
     }
-    
-    /* Customiza a cor dos botões de + e - para o Laranja Oficial */
     div[data-testid="stNumberInput"] button {
         background-color: #D97824 !important;
         color: white !important;
         border: none !important;
     }
+    div[data-testid="stNumberInput"] button:hover { background-color: #b3601b; color: white; }
+    div[data-testid="stNumberInput"] input { text-align: center !important; font-weight: bold !important; }
     
-    div[data-testid="stNumberInput"] button:hover {
-        background-color: #b3601b !important;
-    }
-    
-    /* Alinha o texto interno no centro */
-    div[data-testid="stNumberInput"] input {
-        text-align: center !important;
-        font-weight: bold !important;
-    }
-    
-    /* POSITION ABSOLUTE: Fixa o display no centro físico */
+    /* POSITION ABSOLUTE: Fixa o display no centro físico e expande a área útil */
     .main-display {
         position: absolute;
         top: 50%;
-        left: 55%;
+        left: 56%; /* Ajustado para centralizar considerando a barra lateral */
         transform: translate(-50%, -50%);
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         text-align: center;
-        width: 75%;
-        height: 95vh;
+        width: 82%; /* Aumentado o espaço horizontal útil */
+        height: 98vh;
     }
     
-    .status-text { font-family: 'Impact', sans-serif; font-size: 42px; text-align: center; letter-spacing: 2px; margin-bottom: 5px; }
-    .timer-text { font-family: 'Impact', sans-serif; font-size: 160px; text-align: center; line-height: 1; margin: 10px 0; letter-spacing: 2px; }
-    .round-text { font-family: 'Arial', sans-serif; font-size: 32px; color: #D97824; font-weight: bold; text-align: center; margin-top: 5px; }
+    .status-text { font-family: 'Impact', sans-serif; font-size: 50px; text-align: center; letter-spacing: 3px; margin-bottom: -10px; }
+    
+    /* 🔥 RELÓGIO MONSTRO: Usando 'vw' (Viewport Width) para esticar o número até o limite físico da tela */
+    .timer-text { 
+        font-family: 'Impact', sans-serif; 
+        font-size: 15vw; /* Ocupa 15% da largura total da janela do navegador */
+        text-align: center; 
+        line-height: 0.9; 
+        margin: 0px 0px; 
+        letter-spacing: 1px; 
+    }
+    
+    .round-text { font-family: 'Arial', sans-serif; font-size: 36px; color: #D97824; font-weight: bold; text-align: center; margin-top: -5px; }
     
     div.stButton > button { font-family: 'Impact', sans-serif; font-size: 18px; background-color: #D97824; color: white; border: none; border-radius: 8px; height: 42px; }
     div.stButton > button:hover { background-color: #b3601b; color: white; }
@@ -126,7 +127,6 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # Gerencia travas dos botões de controle
     desabilitar_start = st.session_state.modo_anuncio or st.session_state.em_execucao or st.session_state.wod_finalizado
     btn_start = st.button("START 🚀", use_container_width=True, disabled=desabilitar_start)
     btn_stop = st.button("STOP 🛑", use_container_width=True, disabled=st.session_state.modo_anuncio or not st.session_state.em_execucao)
@@ -166,7 +166,7 @@ with st.sidebar:
         st.session_state.modo_anuncio = not st.session_state.modo_anuncio
         st.session_state.em_execucao = False
 
-# 4. PAINEL CENTRAL (ESTRUTURA ABSOLUTA)
+# 4. PAINEL CENTRAL (ESTRUTURA ABSOLUTA ENORME)
 st.markdown("<div class='main-display'>", unsafe_allow_html=True)
 
 if os.path.exists("logo_cfbq.png"):
@@ -225,13 +225,15 @@ elif st.session_state.em_execucao:
     else:
         r = st.session_state.round_atual
         if r > rounds_totais:
-            # 🏁 TRAVA DO TEMPO FINAL: Congela o estado aqui e desliga a flag de execução
             st.session_state.em_execucao = False
             st.session_state.wod_finalizado = True
             st.rerun()
 
-        txt_round = "AMRAP / TIME CAP" if protocolo == "AMRAP / For Time" else f"ROUND: {r} / {rounds_totais}"
-        round_box.markdown(f"<div class='round-text'>{txt_round}</div>", unsafe_allow_html=True)
+        if protocolo == "AMRAP / For Time":
+            round_box.empty()
+        else:
+            txt_round = f"ROUND: {r} / {rounds_totais}"
+            round_box.markdown(f"<div class='round-text'>{txt_round}</div>", unsafe_allow_html=True)
 
         if not st.session_state.em_descanso:
             # 🟢 MODO WORK
@@ -278,14 +280,17 @@ elif st.session_state.em_execucao:
 # =====================================================================
 else:
     if st.session_state.wod_finalizado:
-        # Se o treino terminou sozinho, exibe as marcas finais travadas na tela
         regressiva = "Decrescente" in direcao
-        # Calcula o último segundo renderizado antes do fim para congelar perfeitamente
         tempo_congelado = 0 if regressiva else tempo_total_segundos
         
         status_box.markdown("<div class='status-text' style='color: #D97824;'>WORKOUT DONE! 🔥</div>", unsafe_allow_html=True)
         timer_box.markdown(f"<div class='timer-text' style='color: #D97824;'>{formatar_tempo(tempo_congelado)}</div>", unsafe_allow_html=True)
-        round_box.markdown("<div class='round-text'>WOD FINALIZADO!</div>", unsafe_allow_html=True)
+        
+        if protocolo == "AMRAP / For Time":
+            round_box.empty()
+        else:
+            round_box.markdown("<div class='round-text'>WOD FINALIZADO!</div>", unsafe_allow_html=True)
+            
     elif not st.session_state.resetado:
         status_box.markdown("<div class='status-text' style='color: #FF3333;'>TREINO INTERROMPIDO</div>", unsafe_allow_html=True)
         timer_box.markdown("<div class='timer-text'>00:00:00</div>", unsafe_allow_html=True)
