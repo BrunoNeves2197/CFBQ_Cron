@@ -6,7 +6,7 @@ import os
 st.set_page_config(page_title="CF BQ - Official Web Timer", layout="wide")
 
 # =====================================================================
-# 🎨 CSS BLINDADO - RELÓGIO GIGANTE SEM BARREIRAS DE TAMANHO
+# 🎨 CSS BLINDADO - RELÓGIO GIGANTE COM ESPAÇAMENTO VERTICAL CORRIGIDO
 # =====================================================================
 st.markdown("""
     <style>
@@ -22,7 +22,7 @@ st.markdown("""
         padding: 0px !important;
     }
 
-    /* DETONA AS MARGENS GLOBAIS: Garante 100% de aproveitamento da tela */
+    /* Garante 100% de aproveitamento da tela */
     .block-container { 
         padding-top: 0rem !important; 
         padding-bottom: 0rem !important;
@@ -38,7 +38,7 @@ st.markdown("""
     [data-testid="stSidebar"] { background-color: #121212 !important; border-right: 2px solid #D97824 !important; }
     [data-testid="stSidebar"] label { color: #E0E0E0 !important; font-weight: bold; font-size: 14px; }
     
-    /* 🔥 ULTRA FORÇADOR DE BOTÕES + E - PARA TODOS OS INPUTS NUMÉRICOS */
+    /* ULTRA FORÇADOR DE BOTÕES + E - PARA TODOS OS INPUTS NUMÉRICOS */
     div[data-testid="stNumberInput"] {
         width: 100% !important;
     }
@@ -50,34 +50,49 @@ st.markdown("""
     div[data-testid="stNumberInput"] button:hover { background-color: #b3601b; color: white; }
     div[data-testid="stNumberInput"] input { text-align: center !important; font-weight: bold !important; }
     
-    /* POSITION ABSOLUTE: Fixa o display no centro físico e expande a área útil */
+    /* POSITION ABSOLUTE: Fixa o display no centro físico da tela */
     .main-display {
         position: absolute;
         top: 50%;
-        left: 56%; /* Ajustado para centralizar considerando a barra lateral */
+        left: 56%; 
         transform: translate(-50%, -50%);
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         text-align: center;
-        width: 82%; /* Aumentado o espaço horizontal útil */
+        width: 82%; 
         height: 98vh;
     }
     
-    .status-text { font-family: 'Impact', sans-serif; font-size: 50px; text-align: center; letter-spacing: 3px; margin-bottom: -10px; }
+    /* Ajuste fino no texto de status superior */
+    .status-text { 
+        font-family: 'Impact', sans-serif; 
+        font-size: 50px; 
+        text-align: center; 
+        letter-spacing: 3px; 
+        margin-bottom: 15px; /* Empurra o relógio um pouco para baixo */
+    }
     
-    /* 🔥 RELÓGIO MONSTRO: Usando 'vw' (Viewport Width) para esticar o número até o limite físico da tela */
+    /* RELÓGIO MONSTRO COM ESPAÇAMENTO VERTICAL AJUSTADO */
     .timer-text { 
         font-family: 'Impact', sans-serif; 
-        font-size: 15vw; /* Ocupa 15% da largura total da janela do navegador */
+        font-size: 15vw; 
         text-align: center; 
         line-height: 0.9; 
-        margin: 0px 0px; 
+        margin: 25px 0px; /* Cria um espaçamento seguro de 25px em cima e embaixo do número */
         letter-spacing: 1px; 
     }
     
-    .round-text { font-family: 'Arial', sans-serif; font-size: 36px; color: #D97824; font-weight: bold; text-align: center; margin-top: -5px; }
+    /* Ajuste fino no texto inferior (Rounds) */
+    .round-text { 
+        font-family: 'Arial', sans-serif; 
+        font-size: 36px; 
+        color: #D97824; 
+        font-weight: bold; 
+        text-align: center; 
+        margin-top: 15px; /* Empurra o texto um pouco para baixo, separando do relógio */
+    }
     
     div.stButton > button { font-family: 'Impact', sans-serif; font-size: 18px; background-color: #D97824; color: white; border: none; border-radius: 8px; height: 42px; }
     div.stButton > button:hover { background-color: #b3601b; color: white; }
@@ -166,7 +181,7 @@ with st.sidebar:
         st.session_state.modo_anuncio = not st.session_state.modo_anuncio
         st.session_state.em_execucao = False
 
-# 4. PAINEL CENTRAL (ESTRUTURA ABSOLUTA ENORME)
+# 4. PAINEL CENTRAL (ESTRUTURA ABSOLUTA)
 st.markdown("<div class='main-display'>", unsafe_allow_html=True)
 
 if os.path.exists("logo_cfbq.png"):
